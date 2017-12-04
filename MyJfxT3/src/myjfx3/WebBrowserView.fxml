@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.web.WebView?>
+
+
+<BorderPane 
+						id="BorderPane"	 prefHeight="400.0"
+						prefWidth="600.0"
+						xmlns:fx="http://javafx.com/fxml/1"
+						xmlns="http://javafx.com/javafx/8"
+						fx:controller="myjfx3.WBController">
+	<top>
+		<HBox BorderPane.alignment = "CENTER">
+			<children>
+				<TextField fx:id ="textURL"  text="http://ya.ru"/>
+				<Button text="Go"  onAction="#goToPage"/>
+			</children>
+		</HBox>
+	</top>
+	
+
+	
+	<center>
+		<WebView fx:id="webPage"  BorderPane.alignment="CENTER"/>
+	</center>
+</BorderPane>
+
