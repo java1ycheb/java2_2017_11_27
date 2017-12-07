@@ -1,0 +1,215 @@
+package sample;
+
+import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+
+public class Main extends Application {
+
+    @Override
+    public void start(Stage primaryStage) throws Exception{
+        Parent root = FXMLLoader.load(getClass().getResource("sample.fxml"));
+        primaryStage.setTitle("DataBase");
+        primaryStage.setScene(new Scene(root, 450, 500));
+        primaryStage.show();
+    }
+
+    public static void main(String[] args) {
+        Mydb.createDb();
+        launch(args);
+    }
+}
+
+-----------------------------------------------------------------------------------
+package sample;
+
+import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Enumeration;
+
+
+public class Mydb {
+
+    public static final String DRIVER_NAME = "com.mysql.jdbc.Driver";
+
+    public static final String CONN_STRING = "jdbc:mysql://localhost:3306/?user=root&password=root&useSSL=false";
+
+    public static void createDb(){
+
+        try {
+            Class.forName(DRIVER_NAME);
+        } catch (ClassNotFoundException ex) {
+            System.out.println("No MySQL driver!");
+        }
+
+        Enumeration<Driver> drvList =  DriverManager.getDrivers();
+        while (drvList.hasMoreElements()) {
+            System.out.println(drvList.nextElement());
+        }
+
+        Connection conn=null;
+        try {
+            conn = DriverManager.getConnection(CONN_STRING);
+        }catch (SQLException ex) {
+            System.out.println("Can't connect to MySQL");
+            return;
+        }
+
+        try {
+            ResultSet rs = conn.getMetaData().getCatalogs();
+            while(rs.next()) System.out.println(rs.getString("TABLE_CAT"));
+        }catch (SQLException ex) {
+            System.out.println("error");
+        }
+
+        try {
+            Statement st = conn.createStatement();
+            int res = st.executeUpdate("CREATE DATABASE db");
+            System.out.println("Database db created, " + res + " result");
+        } catch(SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+        try {
+            Statement st = conn.createStatement();
+            st.executeUpdate("USE db");
+        } catch(SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+
+        try {
+            Statement st = conn.createStatement();
+            st.executeUpdate("CREATE TABLE persons (id int (11),name varchar (64),surname varchar (64),age int (6))");
+
+        } catch(SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+
+    }
+
+}
+
+----------------------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="450.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controller">
+   <children>
+      <Button layoutX="29.0" layoutY="57.0" mnemonicParsing="false" onAction="#addPerson" text="Добавить" />
+      <Button layoutX="29.0" layoutY="115.0" mnemonicParsing="false" text="Найти" />
+      <Button layoutX="29.0" layoutY="186.0" mnemonicParsing="false" onAction="#showDb" prefHeight="25.0" prefWidth="87.0" text="Весь список" />
+      <Button layoutX="149.0" layoutY="186.0" mnemonicParsing="false" onAction="#exit" text="Выход" />
+      <TextField fx:id="txtId" layoutX="101.0" layoutY="57.0" prefHeight="25.0" prefWidth="73.0" />
+      <TextField fx:id="txtName" layoutX="182.0" layoutY="57.0" prefHeight="25.0" prefWidth="73.0" />
+      <TextField fx:id="txtSn" layoutX="264.0" layoutY="57.0" prefHeight="25.0" prefWidth="73.0" />
+      <TextField fx:id="txtAge" layoutX="348.0" layoutY="57.0" prefHeight="25.0" prefWidth="73.0" />
+      <Label layoutX="102.0" layoutY="30.0" text="id">
+         <font>
+            <Font size="14.0" />
+         </font>
+      </Label>
+      <Label layoutX="182.0" layoutY="30.0" text="Имя" />
+      <Label layoutX="264.0" layoutY="30.0" text="Фамилия" />
+      <Label layoutX="348.0" layoutY="30.0" text="Возраст" />
+      <TextArea fx:id="lbl" layoutX="29.0" layoutY="225.0" prefHeight="266.0" prefWidth="394.0" wrapText="true" />
+   </children>
+</AnchorPane>
+---------------------------------------------
+package sample;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.*;
+
+import java.sql.*;
+
+
+public class Controller{
+    @FXML private TextArea lbl;
+    @FXML public TextField txtId;
+    @FXML public TextField txtName;
+    @FXML public TextField txtSn;
+    @FXML public TextField txtAge;
+
+
+
+    @FXML
+    protected void addPerson(ActionEvent event) {
+        Connection conn=null;
+        try {
+            conn = DriverManager.getConnection(Mydb.CONN_STRING);
+        }catch (SQLException ex) {
+            System.out.println("Can't connect to MySQL");
+            return;
+        }
+        try {
+            Statement st = conn.createStatement();
+            st.executeUpdate("USE db");
+        } catch(SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+        try {
+            int id = Integer.parseInt(txtId.getText());
+            String name = txtName.getText();
+            String surname = txtSn.getText();
+            int age = Integer.parseInt(txtAge.getText());
+            String q = "INSERT INTO persons (id,name,surname,age) VALUES (?,?,?,?)";
+            PreparedStatement st = conn.prepareStatement(q);
+            st.setInt(1,id);
+            st.setString(2,name);
+            st.setString(3,surname);
+            st.setInt(4,age);
+            st.execute();
+        } catch(SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+        lbl.setText("");
+
+    }
+    @FXML
+    protected void showDb (ActionEvent event) {
+        Connection conn=null;
+        try {
+            conn = DriverManager.getConnection(Mydb.CONN_STRING);
+        }catch (SQLException ex) {
+            System.out.println("Can't connect to MySQL");
+            return;
+        }
+        try {
+            Statement st = conn.createStatement();
+            st.executeUpdate("USE db");
+        } catch(SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+        try {
+        Statement st = conn.createStatement();
+        ResultSet rs = st.executeQuery( "SELECT * FROM persons");
+        while(rs.next()) lbl.appendText(rs.getString("id")
+                +"  |  " + rs.getString("name")
+                +"    |   "
+                + rs.getString("surname")
+                + "  |  " + rs.getString("age") + "\n");
+        } catch(SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+
+    }
+
+    @FXML
+    protected void exit(ActionEvent event) {
+        System.exit(0);
+
+    }
+
+
+}
